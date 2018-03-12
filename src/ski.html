@@ -1,0 +1,476 @@
+<!-- #################################################################################################################################################
+	 -------------------------------------------------------------------------------------------------------------------------------------------------
+	 Modified by: Aaron, Casey, Dan
+	 CIS 270
+	 12/7/2011
+	 SKIFREE
+	 
+	 Purpose:
+		The purpose of this assignment is to learn how to work in groups to analyze and change existing code in a somewhat similar manor
+		we will encounter at a job.  We did not write the original code, but instead added additional obstacles, functionality, and fomatting. 
+	 
+	 About the Program:
+		The program is a basic ski game running in javascript from a web page.  The object is to navigate the skier and avoiding the oncoming 
+		obstacles.  The left and right arrow keys control the guy's direction, and the 'f' key increases the speed.  After crashing, the program stops
+		until the user presses the space bar, re-initiating the game.  
+	
+		The object of the game is to control the skier using the left and right arrow keys to make the skier move respectively.
+		Pressing the 'f' key causes the skier to speed up. The player must control the skier to avoid rock and tree obstacles.
+		The player is able to move left and right until the wall is reached on either side.
+		The game ends when the skier collides with an obsticle. Pressing the space bar resets the game.
+		The score is a mulitplier of the time.
+	
+	 Before modification:
+		Before our group did our changes, the program was a basic ski game utilizing a tree, rock, and bush images for obstacles.  The game started on 
+		load after waiting 1 second after the page was loaded.  There was no scoring mechanism or time contol and the page was very plain with the 
+		game being enclosed in a small black border.
+
+			OBSTACLES
+				-tree
+				-rock
+				-bush
+			SKIER
+				-guy
+				-guyLeft
+				-guyRight
+				-crash
+			LAYOUT/DESIGN
+				-white background
+				-paragraph with short description
+				-small black border around canvas
+			CONTROLS
+				-started on load
+				-left arrow - left
+				-right arrow - right
+				-space to reset after crash
+				-'f' - increased speed
+				
+		
+	 After modification: **still kept same stuff as before
+		The following is a list of the items we added. We documented heavily throughout the code explaining in detail what 
+		is actually going on.  
+		
+			OBSTACLES
+				+snowman
+				+icecream cone
+
+			LAYOUT/DESIGN
+				+main div blue background
+				+paragraph with updated explanation/directions
+				+start button
+				+output for time elapsed/total score
+				+Radio buttons to select difficulty
+				
+			CONTROLS
+				+Click start button to begin game
+				
+	 ------------------------------------------------------------------------------------------------------------------------------------------------>
+
+<!doctype html>
+<html>
+  <head>
+    <title>Modified SkiFree Game</title>
+	
+	<!-- linked jquery file, renamed for simplicity -->
+    <script type="text/javascript" src="jquery.js"></script>
+	
+    <!-- C S S------------------------------------------------------------------------------------------------
+	#######################################################################################################-->    
+	
+    <style type="text/css">
+    .button
+    {
+        margin: auto;
+        height: 35px;
+        width: 80px;
+    }
+    .main
+    {
+        width: 990px;
+        background-color: #00a;
+        margin: auto;
+        color: #fff;
+    }
+    .canv
+    {
+        background-color: #fff;
+    }
+    .scoreTime
+    {
+        width: 500px;
+        margin: auto;
+        border: solid white 1px;
+    }
+    .time
+    {
+        float: left;
+        margin-left: 80px;
+    }
+    .dif
+    {
+        width: 500px;
+        margin: auto;
+        border: solid white 1px;
+    }
+	#body-root
+	{
+		text-align: center;
+	}
+    </style>
+   
+  </head>
+  <body id="body-root">
+	  <div class="main">			
+	 
+			<br />
+			<!-- C A N V A S ----------------------------------------------------- -->
+			<canvas class="canv" id="can" width="640" height="480" style="border: 1px solid black" ></canvas>
+			
+			<br />
+			<br />
+			
+			<!-- S T A R T   B U T T O N  --------------------------------------- -->
+			<button class="button" onclick="runSki(), startTime()">Start</button>
+			
+			<br />
+			<br />
+			
+			<!-- S C O R E / T I M E ------------------------------------------- -->
+			<h3>Score</h3>
+			
+		   <div class="scoreTime">
+			  <p class="time">Time =&nbsp;<span id="time"></span> </p>
+			  <p> Score =&nbsp;<span id="score"></span> </p>
+		   </div>
+		   
+		   <!-- D I F F I C U L I T Y ------------------------------------------- -->	   
+		   <h3>Select difficulty</h3>
+		   
+		   <div class="dif">
+		   <!-- radio buttons have the same name to insure proper functionality
+				so that only one may be checked at a time
+			-->		
+			  <input type="radio" name="difficulty" id="easy" checked="checked" />Easy <!-- easy is checked by default -->
+			  <br />
+			  <input type="radio" name="difficulty" id="medium"/>Medium
+			  <br />
+			  <input type="radio" name="difficulty" id="hard"/>Hard
+			  <br />
+		  
+		   </div>
+		   
+		   <br />
+		   <!-- I N S T R U C T I O N S ---------------------------------------- -->	   
+		   <pre>
+	The game loads when the Start button is clicked.
+			   
+	Left and Right arrow keys controls the skier.
+			   
+	Spacebar/Start button resets game after crashing.
+			   
+	Scoring is based on time: the longer the skier goes without crashing, the higher the score.
+			   
+	Higher difficulty results in a higher score.
+		   </pre>	   
+	  </div>
+  
+	<!-- J A V A S C R I P T ----------------------------------------------------------------
+	######################################################################################-->
+    <script>
+	//declaring global variable, booleans, and arrays
+        var left;
+        var right;
+        var faster = false;
+       
+        var step = 0;
+        var obst = new Array();
+       
+        var locX = 430;
+        var locY = 100;
+       
+        var running = true;
+        
+        var score;
+		var speed;//= 2.5;
+		var freq; //= 10;
+       
+        // Declaring the variables that will be used for the images,
+		// same directory as main file, with two additional images
+        var guy = new Image();
+        var guyLeft = new Image();
+        var guyRight = new Image();
+        var crash = new Image();
+        var rock = new Image();
+        var tree = new Image();
+        var bush = new Image();
+        var iceCream = new Image();
+        var snowman = new Image();
+		
+		//the images declared above are now being mapped to the actual name of the file
+		//a sub property of each variable, src is being defined to display the images
+        guy.src = "guy_down.png";
+        guyLeft.src = "guy_left.png";
+        guyRight.src = "guy_right.png";
+        crash.src = "crash.png";
+        rock.src = "rock.png";
+        tree.src = "tree.png";
+        iceCream.src = "ice_cream.png";
+        snowman.src = "snowman.png";
+      
+        // the '$' function is in the jquery file.
+        // Its function is to determine the user control of the game, to read what keys the user presses and set the bools accordingly
+        // the bools are then set to be used in the runski method	
+        $(window).keydown(function(e){
+            if(e.keyCode == 37){
+                left = true;
+            }
+            else if(e.keyCode == 39){
+                right = true;
+            }
+            else if(e.keyCode == 70){
+                faster = true;
+            }
+        });
+       
+        // again '$' is stated above, this serves relatively the same functionality as the 'keydown' method,
+        // however, keyup offsets the values indicating a user change in commands
+        // again these will be used to manipulate the game in the runski method
+        $(window).keyup(function(e){
+            if(e.keyCode == 37){
+                left = false;
+            }
+            else if(e.keyCode == 39){
+                right = false;
+            }
+            else if(e.keyCode == 70){
+                faster = false;
+            }
+           
+            // this condition will be called when the program is not running according to its definition
+            // resets the step, locX, locY, running, and obstacle array, then calls the main 'runski' method again
+            // keyCode == 32, my guess is without looking it up, keyCode 32 = space, keyCode 37 = left arrow, 39 = right arrow, and 70 = 'f'
+            // keyCode 70 i guess could be anything used to control the gain of speed.
+            else if(e.keyCode == 32){
+                if(!running){
+                    step = 0;
+                    obst = new Array();
+                    locX = 430;
+                    locY = 100;
+                    running = true;
+                    
+                    // resets score
+                    //score = 0;
+                    runSki();// call to runSki method, running is reset to true in the line above
+                    // since running is set to true, it passes the first condition of the runSki method
+                    // allowing the program to continue running
+                }
+            }
+        });
+      
+      //---------------------------------------- T I M E R ------------------------------------------------------------------------------
+	  //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+	  // this timer uses a simple setInterval function and a counter variable
+	  // it counts by the second, and is first called when the user clicks the start button
+	  // the timer also stops when the crash event occurs, and resets to zero
+        var x = 0; 
+        var int;
+        var y;
+        function startTime ()
+        {
+            int = setInterval('time()', 1000 );
+            
+            if(!running){
+                    //so we redeclare the variables that are vital to the game beginning such as 
+                    //the array and the locations, set running to true and start over.
+                    step = 0;
+                    obst = new Array();
+                    locX = 430;
+                    locY = 100;
+                    running = true;
+                    runSki();
+                }
+        }
+        
+		//this is the time function called by the setInterval function directly above
+		//it used innerHTML to update the current time and score
+        function time()
+        {
+            var y = document.getElementById("time");
+            y.innerHTML = x + " seconds";
+            
+            x++;
+            document.getElementById("score").innerHTML = score;
+        }
+
+        time();
+     
+		// ------------------------------------------- R U N S K I -----------------------------------------------------------------
+		// +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+		//accesses the canvas element from the html above and begins the game
+        function runSki(){
+            if(!running) return;
+            var canvas = document.getElementById("can");
+            var ctx = canvas.getContext("2d");
+           
+            ctx.fillStyle = "rgb(255,255,255)";
+            ctx.fillRect (0, 0, canvas.width, canvas.height);	//clear the canvas first, to a white background
+			
+			//the following two if statements are what give the illusion that the skier is moving left and right when, in reality
+			//the objects are moving in the opposite direction
+
+			//check to see if we are holding left key down
+			//if we are and the location is greater then -320 then we decrement
+            // locX min value is -320
+            if(left){
+                if(locX > -320){
+                    locX--;
+                }
+            }
+			
+			//check to see if we are holding the right key down
+			//if we are and the location is less then 640+320 then we increment
+            // locX max value is 960
+            if(right){
+                if(locX < 640+320){
+                    locX++;
+                }
+            }
+           
+		   //now we make the fill style black
+            ctx.fillStyle = "rgb(0,0,0)";
+           
+		    //these two lines of code fill in the rectangles you see on the sides of the map
+			//if you manage to swing the whole way to the sides without crashing
+            //they set the boundaries for the min and max values of locX
+            ctx.fillRect (-10-locX, 0, 10, canvas.height);
+            ctx.fillRect (640*2+20-locX, 0, 10, canvas.height);
+           		   
+		   //-------------------------------------------- D I F F I C U L T Y -------------------------------------------------//
+		   if(document.getElementById("easy").checked)
+		   {
+				speed = 2.5;
+				freq = 10;
+				score = Math.floor(x * 163.5230);
+		   }
+		   else if(document.getElementById("medium").checked)
+		   {
+			    speed = 5;
+			    freq = 5;
+				score = Math.floor(x * 247.2934);
+		   }
+		   else if(document.getElementById("hard").checked)
+		   {
+			    speed = 6;
+			    freq = 3;
+				score = Math.floor(x * 503.7923);
+		   }
+		   		   
+		    //a for loop that runs for as many times as there are objects in the obst array..
+			//it gets the index value of each object in the array and decrements its y value,
+			//moving it up the screen and giving the illusion that the skier is moving downhill
+            // normal speed (-2.5 units/second) , then if faster, speed increases by an additional 2.5
+            for(var i = 0; i < obst.length;i++){
+                var o = obst[i];
+                o.y -= speed;
+               
+                //if f is being held down, the speed doubles
+                if(faster){
+                    o.y -= 2.5;
+                }
+																
+                // filling the canvas with the array according to the type and location of the obstacles
+				
+                ctx.drawImage(o.type,o.x-locX,o.y);	//draws the image of the obstacle, note the location changes
+                if(o.y < -30){						//every time the loop runs, it happens so fast that the illusion
+                  obst.splice(i,1);					//of movement is created
+                  i--;
+                }
+			   
+			   //new variables declared to store the values of the obstacles' x and y locations
+                var tX = o.x-locX+5;
+                var tY = o.y+5;
+               
+			   //distance formula to detect collisions
+                var d = Math.sqrt((tX-320+3)*(tX-320+3)+ (tY-100+5)*(tY-100+5));
+				
+				//---------------------------- C R A S H -------------------------------------------------//
+				//this section handles the event of a crash;
+				//if the image of the ski guy comes into contact with the same
+				//location as the image of another object
+               
+                // guy will not crash if d >= 20, guy can't get too close to the objects in the array
+                // o.x and o.y are the coordinates of  the obstacles 
+                // when when the guy hits a rock/tree/snowman/iceCream, BOOM! crash guy appears and running is set to false
+                if(d < 20){
+                    ctx.drawImage(crash,320,locY);
+                    running = false;
+					
+					//must reset timer variables and stop the timer interval 
+                    x=0;
+                    clearInterval(int);
+                    score = 0;                    
+                }
+            }
+           
+            // if guy hasn't crashed
+            if(running){
+           
+            // draws the guy, either left, right, or straight down
+            if(left){
+                ctx.drawImage(guyLeft,320,locY);
+            }
+            else if(right){
+                ctx.drawImage(guyRight,320,locY);
+            }
+            else{
+                ctx.drawImage(guy,320,locY);
+            }
+            }
+			
+            // Not used **   
+            //var randomnumber=Math.floor(Math.random()*641)
+           
+            // when step is a whole number
+            // ** whole number used to make objects less frequent **
+            if(Math.floor(step*10)%freq==0){
+                // variable indicating tree, rock, iceCream, or snowman
+				var type;
+				
+				// draw a rock
+                if(Math.floor(Math.random()*3) == 0){
+                  type = rock;
+                }
+				// else if draw an iceCream cone
+                else if(Math.floor(Math.random()*3) == 1){
+                  type = iceCream;
+                }
+				// else if draw a snowman
+                else if(Math.floor(Math.random()*3) == 2){
+                  type = snowman;
+                }
+				// else draw the tree
+                else{
+                  type = tree;
+                }
+                // randomly filling array with type of obstacle at random position
+                var obj = {x: Math.floor(Math.random()*641*2), y:480, type: type};
+                obst.push(obj);
+            }
+			// increments step var.
+			// an obstacle is drawn every ten times through the loop
+            step+= 0.1;
+           
+            if(running){
+                // runski() calls itself once every 1000/second .... thus, it is also the speed of the guy
+				// until running is no longer true, i.e. a crash occurs
+                setTimeout("runSki();",1);
+            }         
+        }
+		
+        // ** took out this line of code, runSki() is called by clicking 'Start' button instead of waiting 1 second before being called
+        // calls runski() first time after waiting one second
+		//setTimeout("runSki();",1000);
+            
+    </script>
+  </body>
+</html>
